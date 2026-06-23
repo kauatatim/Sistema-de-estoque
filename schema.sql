@@ -1,0 +1,45 @@
+CREATE DATABASE DB_SISTEM_ESTOQUE;
+USE DB_SISTEM_ESTOQUE;
+
+
+CREATE TABLE status (
+  ID_Status INT PRIMARY KEY AUTO_INCREMENT,
+  Nome_Status VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE categoria (
+  ID_Categoria INT PRIMARY KEY AUTO_INCREMENT,
+  Nome_Categoria VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE usuario (
+  ID_Usuario INT PRIMARY KEY AUTO_INCREMENT,
+  Nome_Usuario VARCHAR(100) NOT NULL,
+  Email VARCHAR(250) UNIQUE NOT NULL,
+  Senha VARCHAR(250) NOT NULL
+);
+
+
+CREATE TABLE item (
+  ID_Item INT PRIMARY KEY AUTO_INCREMENT,
+  Nome_Item VARCHAR(50) NOT NULL,
+  Descricao_Item VARCHAR(200),
+  ID_Categoria INT,
+  ID_Status INT,
+  Quantidade INT DEFAULT 0,
+  FOREIGN KEY (ID_Categoria) REFERENCES categoria(ID_Categoria),
+  FOREIGN KEY (ID_Status) REFERENCES status(ID_Status)
+);
+
+
+CREATE TABLE emprestimo (
+  ID_Emprestimo INT PRIMARY KEY AUTO_INCREMENT,
+  ID_Item INT,
+  ID_Usuario INT,
+  Data_Retirada DATETIME DEFAULT CURRENT_TIMESTAMP,
+  Previsao_Devolucao DATETIME NOT NULL,
+  Data_Devolucao DATETIME,
+  Descricao_Emprestimo VARCHAR(250),
+  FOREIGN KEY (ID_Item) REFERENCES item(ID_Item),
+  FOREIGN KEY (ID_Usuario) REFERENCES usuario(ID_Usuario)
+);
