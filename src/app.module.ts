@@ -17,7 +17,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       username: 'root',           // Usuário padrão do MySQL (mude se o seu for diferente)
       password: 'password',
       database: 'DB_SISTEM_ESTOQUE',
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      entities: [],
       synchronize: false,         
     }),
     // Conforme for criando os módulos e desmarcando lá em cima, desmarque aqui também:
