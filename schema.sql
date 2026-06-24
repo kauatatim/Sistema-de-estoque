@@ -1,45 +1,149 @@
 CREATE DATABASE DB_SISTEM_ESTOQUE;
 USE DB_SISTEM_ESTOQUE;
 
-
-CREATE TABLE status (
-  ID_Status INT PRIMARY KEY AUTO_INCREMENT,
-  Nome_Status VARCHAR(50) NOT NULL
-);
-
-CREATE TABLE categoria (
-  ID_Categoria INT PRIMARY KEY AUTO_INCREMENT,
-  Nome_Categoria VARCHAR(50) NOT NULL
-);
-
 CREATE TABLE usuario (
-  ID_Usuario INT PRIMARY KEY AUTO_INCREMENT,
-  Nome_Usuario VARCHAR(100) NOT NULL,
-  Email VARCHAR(250) UNIQUE NOT NULL,
-  Senha VARCHAR(250) NOT NULL
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(150) NOT NULL,
+    email_google VARCHAR(150) NOT NULL UNIQUE,
+    matricula VARCHAR(50),
+    tipo_perfil ENUM('ALUNO','PROFESSOR','PEDAGOGO','DIRETOR') NOT NULL,
+    data_cadastro DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-
-CREATE TABLE item (
-  ID_Item INT PRIMARY KEY AUTO_INCREMENT,
-  Nome_Item VARCHAR(50) NOT NULL,
-  Descricao_Item VARCHAR(200),
-  ID_Categoria INT,
-  ID_Status INT,
-  Quantidade INT DEFAULT 0,
-  FOREIGN KEY (ID_Categoria) REFERENCES categoria(ID_Categoria),
-  FOREIGN KEY (ID_Status) REFERENCES status(ID_Status)
+CREATE TABLE aluno (
+    usuario_id INT PRIMARY KEY,
+    curso VARCHAR(100),
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id) ON DELETE CASCADE
 );
 
+CREATE TABLE professor (
+    usuario_id INT PRIMARY KEY,
+    departamento VARCHAR(100),
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id) ON DELETE CASCADE
+);
+
+CREATE TABLE pedagogo (
+    usuario_id INT PRIMARY KEY,
+    area_atuacao VARCHAR(100),
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id) ON DELETE CASCADE
+);
+
+CREATE TABLE diretor (
+    usuario_id INT PRIMARY KEY,
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id) ON DELETE CASCADE
+);
+
+CREATE TABLE categoria_equipamento (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(60) NOT NULL UNIQUE
+);
+
+CREATE TABLE equipamento (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(150) NOT NULL,
+    categoria_id INT NOT NULL,
+    codigo_patrimonio VARCHAR(50) NOT NULL UNIQUE,
+    status ENUM('DISPONIVEL','EMPRESTADO','MANUTENCAO')
+        NOT NULL DEFAULT 'DISPONIVEL',
+    cadastrado_por INT NOT NULL,
+    data_cadastro DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    atualizado_por INT,
+    data_atualizacao DATETIME,
+
+    FOREIGN KEY (categoria_id) REFERENCES categoria_equipamento(id),
+    FOREIGN KEY (cadastrado_por) REFERENCES usuario(id),
+    FOREIGN KEY (atualizado_por) REFERENCES usuario(id)
+);
 
 CREATE TABLE emprestimo (
-  ID_Emprestimo INT PRIMARY KEY AUTO_INCREMENT,
-  ID_Item INT,
-  ID_Usuario INT,
-  Data_Retirada DATETIME DEFAULT CURRENT_TIMESTAMP,
-  Previsao_Devolucao DATETIME NOT NULL,
-  Data_Devolucao DATETIME,
-  Descricao_Emprestimo VARCHAR(250),
-  FOREIGN KEY (ID_Item) REFERENCES item(ID_Item),
-  FOREIGN KEY (ID_Usuario) REFERENCES usuario(ID_Usuario)
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    data_solicitacao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    data_devolucao_prevista DATETIME,
+    data_devolucao_real DATETIME,
+    status ENUM('PENDENTE','APROVADO','REJEITADO','DEVOLVIDO')
+        NOT NULL DEFAULT 'PENDENTE',
+    usuario_id INT NOT NULL,
+    equipamento_id INT NOT NULL,
+    aprovado_por INT,
+
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id),
+    FOREIGN KEY (equipamento_id) REFERENCES equipamento(id),
+    FOREIGN KEY (aprovado_por) REFERENCES usuario(id)
 );
+
+CREATE INDEX idx_emprestimo_status ON emprestimo(status);
+CREATE INDEX idx_equipamento_status ON equipamento(status);
+CREATE INDEX idx_emprestimo_usuario ON emprestimo(usuario_id);
+CREATE INDEX idx_equipamento_categoria ON equipamento(categoria_id);
+
+DELIMITER $$
+
+CREATE TRIGGER trg_emprestimo_atualiza_equipamento
+AFTER UPDATE ON emprestimo
+FOR EACH ROW
+BEGIN
+    IF NEW.status = 'APROVADO' THEN
+        UPDATE equipamento
+        SET status = 'EMPRESTADO'
+        WHERE id = NEW.equipamento_id;
+
+    ELSEIF NEW.status IN ('DEVOLVIDO','REJEITADO') THEN
+        UPDATE equipamento
+        SET status = 'DISPONIVEL'
+        WHERE id = NEW.equipamento_id;
+    END IF;
+END$$
+
+DELIMITER ;
+
+CREATE VIEW vw_status_equipamentos AS
+SELECT
+    e.id,
+    e.nome,
+    c.nome AS categoria,
+    e.codigo_patrimonio,
+    e.status,
+    u.nome AS emprestado_para,
+    emp.data_devolucao_prevista
+FROM equipamento e
+JOIN categoria_equipamento c
+    ON c.id = e.categoria_id
+LEFT JOIN emprestimo emp
+    ON emp.equipamento_id = e.id
+    AND emp.status = 'APROVADO'
+LEFT JOIN usuario u
+    ON u.id = emp.usuario_id;
+
+INSERT INTO usuario (nome, email_google, matricula, tipo_perfil)
+VALUES
+('Maria Silva', 'maria.silva@escola.com', '2024001', 'ALUNO'),
+('João Souza', 'joao.souza@escola.com', NULL, 'PROFESSOR'),
+('Ana Pedagoga', 'ana.pedagoga@escola.com', NULL, 'PEDAGOGO'),
+('Carla Diretora', 'carla.diretora@escola.com', NULL, 'DIRETOR');
+
+INSERT INTO aluno (usuario_id, curso)
+VALUES (1, 'Desenvolvimento de Sistemas');
+
+INSERT INTO professor (usuario_id, departamento)
+VALUES (2, 'Informática');
+
+INSERT INTO pedagogo (usuario_id, area_atuacao)
+VALUES (3, 'Orientação Educacional');
+
+INSERT INTO diretor (usuario_id)
+VALUES (4);
+
+INSERT INTO categoria_equipamento (nome)
+VALUES
+('Mouse'),
+('Teclado'),
+('Tablet'),
+('Notebook'),
+('Monitor');
+
+INSERT INTO equipamento
+(nome, categoria_id, codigo_patrimonio, status, cadastrado_por)
+VALUES
+('Mouse Logitech M170', 1, 'PAT-0001', 'DISPONIVEL', 4),
+('Teclado Multilaser', 2, 'PAT-0002', 'DISPONIVEL', 4),
+('Tablet Samsung A8', 3, 'PAT-0003', 'DISPONIVEL', 4);
