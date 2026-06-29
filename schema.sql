@@ -147,3 +147,5 @@ VALUES
 ('Mouse Logitech M170', 1, 'PAT-0001', 'DISPONIVEL', 4),
 ('Teclado Multilaser', 2, 'PAT-0002', 'DISPONIVEL', 4),
 ('Tablet Samsung A8', 3, 'PAT-0003', 'DISPONIVEL', 4);
+
+#teste de funcionalidade
