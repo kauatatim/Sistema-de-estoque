@@ -148,4 +148,4 @@ VALUES
 ('Teclado Multilaser', 2, 'PAT-0002', 'DISPONIVEL', 4),
 ('Tablet Samsung A8', 3, 'PAT-0003', 'DISPONIVEL', 4);
 
-#teste de funcionalidade
+//teste de funcionalidade
