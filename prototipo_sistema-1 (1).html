@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab. Informática — Sistema de Empréstimos</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --navy:    #0D1B2A;
+    --navy2:   #1B2E45;
+    --blue:    #2563EB;
+    --blue2:   #1D4ED8;
+    --light:   #F0F4F8;
+    --white:   #FFFFFF;
+    --green:   #16A34A;
+    --red:     #DC2626;
+    --yellow:  #D97706;
+    --gray:    #6B7280;
+    --border:  #E2E8F0;
+  }
+
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--light); color: var(--navy); }
+
+  /* ── TELAS ── */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; }
+
+  /* ══════════════════════════════
+     TELA 1 — LOGIN
+  ══════════════════════════════ */
+  #login {
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 100%);
+  }
+  .login-box {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 48px 40px;
+    width: 380px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+  }
+  .login-logo {
+    width: 64px; height: 64px;
+    background: var(--blue);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 28px;
+  }
+  .login-box h1 { text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .login-box p  { text-align: center; color: var(--gray); font-size: 13px; margin-bottom: 32px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--navy2); }
+  .field input {
+    width: 100%; padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: 14px;
+    outline: none; transition: border .2s;
+  }
+  .field input:focus { border-color: var(--blue); }
+  .btn-primary {
+    width: 100%; padding: 12px;
+    background: var(--blue); color: #fff;
+    border: none; border-radius: 8px;
+    font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: background .2s;
+    margin-top: 8px;
+  }
+  .btn-primary:hover { background: var(--blue2); }
+
+  /* ══════════════════════════════
+     LAYOUT COM SIDEBAR
+  ══════════════════════════════ */
+  .app-layout { display: flex; width: 100%; }
+
+  .sidebar {
+    width: 220px; min-height: 100vh;
+    background: var(--navy);
+    display: flex; flex-direction: column;
+    padding: 24px 0;
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 20px 24px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    margin-bottom: 16px;
+  }
+  .sidebar-logo .icon {
+    width: 36px; height: 36px;
+    background: var(--blue);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .sidebar-logo span { color: #fff; font-size: 13px; font-weight: 700; line-height: 1.3; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px;
+    color: rgba(255,255,255,.6);
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all .15s;
+    border-left: 3px solid transparent;
+  }
+  .nav-item:hover { color: #fff; background: rgba(255,255,255,.05); }
+  .nav-item.active { color: #fff; background: rgba(37,99,235,.2); border-left-color: var(--blue); }
+  .nav-item .ni { font-size: 16px; }
+
+  .nav-section {
+    font-size: 10px; font-weight: 700; letter-spacing: .08em;
+    color: rgba(255,255,255,.3); text-transform: uppercase;
+    padding: 16px 20px 6px;
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255,255,255,.1);
+  }
+  .user-chip {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .avatar {
+    width: 32px; height: 32px;
+    background: var(--blue);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+  .user-chip .info span { display: block; }
+  .user-chip .info .name { color: #fff; font-size: 12px; font-weight: 600; }
+  .user-chip .info .role { color: rgba(255,255,255,.4); font-size: 11px; }
+
+  /* ── MAIN CONTENT ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .topbar {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .topbar h2 { font-size: 18px; font-weight: 700; }
+  .topbar .sub { font-size: 13px; color: var(--gray); margin-top: 2px; }
+  .topbar-actions { display: flex; gap: 10px; }
+
+  .content { padding: 24px 28px; flex: 1; overflow-y: auto; }
+
+  /* ── CARDS ── */
+  .cards-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--border);
+  }
+  .card-label { font-size: 12px; color: var(--gray); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  .card-value { font-size: 32px; font-weight: 800; margin: 6px 0 4px; }
+  .card-sub { font-size: 12px; color: var(--gray); }
+  .card.green .card-value { color: var(--green); }
+  .card.red   .card-value { color: var(--red); }
+  .card.yellow .card-value { color: var(--yellow); }
+  .card.blue  .card-value { color: var(--blue); }
+
+  /* ── TABELA ── */
+  .table-wrap {
+    background: var(--white);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .table-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .table-header h3 { font-size: 15px; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; padding: 11px 20px;
+    font-size: 11px; font-weight: 700; color: var(--gray);
+    text-transform: uppercase; letter-spacing: .05em;
+    background: #F8FAFC; border-bottom: 1px solid var(--border);
+  }
+  td { padding: 13px 20px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #F8FAFC; }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+  }
+  .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+  .badge.green  { background: #DCFCE7; color: #15803D; }
+  .badge.green::before  { background: #16A34A; }
+  .badge.red    { background: #FEE2E2; color: #B91C1C; }
+  .badge.red::before    { background: #DC2626; }
+  .badge.yellow { background: #FEF3C7; color: #92400E; }
+  .badge.yellow::before { background: #D97706; }
+  .badge.blue   { background: #DBEAFE; color: #1D4ED8; }
+  .badge.blue::before   { background: #2563EB; }
+
+  /* ── BOTÕES ── */
+  .btn {
+    padding: 8px 16px; border-radius: 8px; font-size: 13px;
+    font-weight: 600; cursor: pointer; border: none; transition: all .15s;
+  }
+  .btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 6px; }
+  .btn-blue { background: var(--blue); color: #fff; }
+  .btn-blue:hover { background: var(--blue2); }
+  .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--navy); }
+  .btn-outline:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-green:hover { background: #15803D; }
+  .btn-red { background: var(--red); color: #fff; }
+  .btn-red:hover { background: #B91C1C; }
+
+  /* ── FORM ── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-field { display: flex; flex-direction: column; gap: 6px; }
+  .form-field.full { grid-column: 1 / -1; }
+  .form-field label { font-size: 12px; font-weight: 700; color: var(--navy2); text-transform: uppercase; letter-spacing: .04em; }
+  .form-field input,
+  .form-field select {
+    padding: 10px 12px; border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: 13px; outline: none;
+    transition: border .2s; background: var(--white);
+  }
+  .form-field input:focus,
+  .form-field select:focus { border-color: var(--blue); }
+  .form-card {
+    background: var(--white); border-radius: 12px;
+    border: 1px solid var(--border); padding: 24px;
+    margin-bottom: 16px;
+  }
+  .form-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+
+  /* ── DETALHE EMPRÉSTIMO ── */
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .detail-item { }
+  .detail-item .dl { font-size: 11px; color: var(--gray); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
+  .detail-item .dv { font-size: 14px; font-weight: 600; }
+
+  .action-row { display: flex; gap: 10px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+  /* ── TABS ── */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .tab {
+    padding: 10px 20px; font-size: 13px; font-weight: 600;
+    color: var(--gray); cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all .15s;
+  }
+  .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+  /* ── ALERTA ── */
+  .alert {
+    padding: 12px 16px; border-radius: 8px; font-size: 13px;
+    display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+  }
+  .alert.success { background: #DCFCE7; color: #15803D; border: 1px solid #BBF7D0; }
+  .alert.warning { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+
+  /* esconde telas internas */
+  .sub-screen { display: none; }
+  .sub-screen.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════
+     TELA 1 — LOGIN
+══════════════════════════ -->
+<div id="login" class="screen active">
+  <div class="login-box">
+    <div class="login-logo">🖥️</div>
+    <h1>Lab. Informática</h1>
+    <p>Sistema de Gestão de Empréstimos</p>
+    <div class="field">
+      <label>E-mail institucional</label>
+      <input type="email" placeholder="seu@escola.edu.br" value="diretor@escola.edu.br">
+    </div>
+    <div class="field">
+      <label>Senha</label>
+      <input type="password" placeholder="••••••••" value="123456">
+    </div>
+    <button class="btn-primary" onclick="goTo('dashboard')">Entrar →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     TELA 2 — DASHBOARD
+══════════════════════════ -->
+<div id="dashboard" class="screen">
+  <div class="app-layout">
+    <!-- sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="icon">🖥️</div>
+        <span>Lab.<br>Informática</span>
+      </div>
+      <span class="nav-section">Geral</span>
+      <div class="nav-item active" onclick="goTo('dashboard')"><span class="ni">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="goTo('equipamentos')"><span class="ni">🖱️</span> Equipamentos</div>
+      <div class="nav-item" onclick="goTo('emprestimos')"><span class="ni">📋</span> Empréstimos</div>
+      <div class="nav-item" onclick="goTo('devolucao')"><span class="ni">↩️</span> Devoluções</div>
+      <span class="nav-section">Administração</span>
+      <div class="nav-item" onclick="goTo('cadastro-item')"><span class="ni">➕</span> Cadastrar Item</div>
+      <div class="nav-item" onclick="goTo('usuarios')"><span class="ni">👥</span> Usuários</div>
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="avatar">CD</div>
+          <div class="info">
+            <span class="name">Carla Diretora</span>
+            <span class="role">Diretor</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+    <!-- conteúdo -->
+    <div class="main">
+      <div class="topbar">
+        <div>
+          <div class="topbar h2" style="font-size:18px;font-weight:700;">Dashboard</div>
+          <div class="sub">Visão geral do laboratório</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-blue" onclick="goTo('selecao-item')">Novo Empréstimo</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="cards-row">
+          <div class="card green">
+            <div class="card-label">Disponíveis</div>
+            <div class="card-value">18</div>
+            <div class="card-sub">itens no laboratório</div>
+          </div>
+          <div class="card red">
+            <div class="card-label">Emprestados</div>
+            <div class="card-value">7</div>
+            <div class="card-sub">itens em uso</div>
+          </div>
+          <div class="card yellow">
+            <div class="card-label">Pendentes</div>
+            <div class="card-value">3</div>
+            <div class="card-sub">aguardando aprovação</div>
+          </div>
+          <div class="card blue">
+            <div class="card-label">Manutenção</div>
+            <div class="card-value">2</div>
+            <div class="card-sub">fora de uso</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-header">
+            <h3>Últimos Empréstimos</h3>
+            <button class="btn btn-outline btn-sm" onclick="goTo('emprestimos')">Ver todos</button>
+          </div>
+          <table>
+            <thead><tr>
+              <th>Item</th><th>Categoria</th><th>Aluno/Prof</th><th>Retirada</th><th>Devolução</th><th>Status</th>
+            </tr></thead>
+            <tbody>
+              <tr>
+                <td><b>Tablet Samsung A8</b></td><td>Tablet</td><td>Maria Silva</td>
+                <td>01/07/2026</td><td>03/07/2026</td>
+                <td><span class="badge yellow">Pendente</span></td>
+              </tr>
+              <tr>
+                <td><b>Mouse Logitech</b></td><td>Mouse</td><td>João Aluno</td>
+                <td>30/06/2026</td><td>02/07/2026</td>
+                <td><span class="badge red">Emprestado</span></td>
+              </tr>
+              <tr>
+                <td><b>Notebook Dell</b></td><td>Notebook</td><td>Prof. Carlos</td>
+                <td>28/06/2026</td><td>01/07/2026</td>
+                <td><span class="badge green">Devolvido</span></td>
+              </tr>
+              <tr>
+                <td><b>Teclado Multilaser</b></td><td>Teclado</td><td>Ana Lima</td>
+                <td>01/07/2026</td><td>04/07/2026</td>
+                <td><span class="badge blue">Aprovado</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     TELA 3 — EQUIPAMENTOS
+══════════════════════════ -->
+<div id="equipamentos" class="screen">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><div class="icon">🖥️</div><span>Lab.<br>Informática</span></div>
+      <span class="nav-section">Geral</span>
+      <div class="nav-item" onclick="goTo('dashboard')"><span class="ni">📊</span> Dashboard</div>
+      <div class="nav-item active"><span class="ni">🖱️</span> Equipamentos</div>
+      <div class="nav-item" onclick="goTo('emprestimos')"><span class="ni">📋</span> Empréstimos</div>
+      <div class="nav-item" onclick="goTo('devolucao')"><span class="ni">↩️</span> Devoluções</div>
+      <span class="nav-section">Administração</span>
+      <div class="nav-item" onclick="goTo('cadastro-item')"><span class="ni">➕</span> Cadastrar Item</div>
+      <div class="nav-item" onclick="goTo('usuarios')"><span class="ni">👥</span> Usuários</div>
+      <div class="sidebar-footer"><div class="user-chip"><div class="avatar">CD</div><div class="info"><span class="name">Carla Diretora</span><span class="role">Diretor</span></div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <div><div style="font-size:18px;font-weight:700;">Equipamentos</div><div class="sub">Todos os itens do laboratório</div></div>
+        <div class="topbar-actions">
+          <button class="btn btn-blue" onclick="goTo('cadastro-item')">+ Cadastrar Item</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="tabs">
+          <div class="tab active">Todos (27)</div>
+          <div class="tab">Disponíveis (18)</div>
+          <div class="tab">Emprestados (7)</div>
+          <div class="tab">Manutenção (2)</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Patrimônio</th><th>Nome</th><th>Categoria</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody>
+              <tr><td>PAT-0001</td><td><b>Mouse Logitech M170</b></td><td>Mouse</td><td><span class="badge red">Emprestado</span></td><td><button class="btn btn-outline btn-sm">Detalhes</button></td></tr>
+              <tr><td>PAT-0002</td><td><b>Teclado Multilaser</b></td><td>Teclado</td><td><span class="badge green">Disponível</span></td><td><button class="btn btn-blue btn-sm" onclick="goTo('selecao-item')">Emprestar</button></td></tr>
+              <tr><td>PAT-0003</td><td><b>Tablet Samsung A8</b></td><td>Tablet</td><td><span class="badge yellow">Pendente</span></td><td><button class="btn btn-outline btn-sm">Detalhes</button></td></tr>
+              <tr><td>PAT-0004</td><td><b>Notebook Dell Latitude</b></td><td>Notebook</td><td><span class="badge green">Disponível</span></td><td><button class="btn btn-blue btn-sm" onclick="goTo('selecao-item')">Emprestar</button></td></tr>
+              <tr><td>PAT-0005</td><td><b>Monitor LG 22"</b></td><td>Monitor</td><td><span class="badge red">Emprestado</span></td><td><button class="btn btn-outline btn-sm">Detalhes</button></td></tr>
+              <tr><td>PAT-0006</td><td><b>Cabo HDMI 2m</b></td><td>Cabo HDMI</td><td><span class="badge green">Disponível</span></td><td><button class="btn btn-blue btn-sm" onclick="goTo('selecao-item')">Emprestar</button></td></tr>
+              <tr><td>PAT-0007</td><td><b>Headset Multilaser</b></td><td>Headset</td><td><span class="badge yellow">Manutenção</span></td><td><button class="btn btn-outline btn-sm">Detalhes</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     TELA 4 — SELECÃO DE ITEM
+══════════════════════════ -->
+<div id="selecao-item" class="screen">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><div class="icon">🖥️</div><span>Lab.<br>Informática</span></div>
+      <span class="nav-section">Geral</span>
+      <div class="nav-item" onclick="goTo('dashboard')"><span class="ni">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="goTo('equipamentos')"><span class="ni">🖱️</span> Equipamentos</div>
+      <div class="nav-item active"><span class="ni">📋</span> Empréstimos</div>
+      <div class="nav-item" onclick="goTo('devolucao')"><span class="ni">↩️</span> Devoluções</div>
+      <span class="nav-section">Administração</span>
+      <div class="nav-item" onclick="goTo('cadastro-item')"><span class="ni">➕</span> Cadastrar Item</div>
+      <div class="nav-item" onclick="goTo('usuarios')"><span class="ni">👥</span> Usuários</div>
+      <div class="sidebar-footer"><div class="user-chip"><div class="avatar">CD</div><div class="info"><span class="name">Carla Diretora</span><span class="role">Diretor</span></div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <div><div style="font-size:18px;font-weight:700;">Novo Empréstimo</div><div class="sub">Passo 1 de 3 — Selecionar item</div></div>
+        <div class="topbar-actions">
+          <button class="btn btn-outline" onclick="goTo('dashboard')">Cancelar</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="form-card">
+          <h3>Filtrar itens disponíveis</h3>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Categoria</label>
+              <select><option>Todas as categorias</option><option>Mouse</option><option>Teclado</option><option>Tablet</option><option>Notebook</option></select>
+            </div>
+            <div class="form-field">
+              <label>Buscar por nome ou patrimônio</label>
+              <input type="text" placeholder="Ex: Tablet, PAT-0003...">
+            </div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-header"><h3>Itens disponíveis para empréstimo</h3></div>
+          <table>
+            <thead><tr><th>Patrimônio</th><th>Nome</th><th>Categoria</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <tr><td>PAT-0002</td><td><b>Teclado Multilaser</b></td><td>Teclado</td><td><span class="badge green">Disponível</span></td><td><button class="btn btn-blue btn-sm" onclick="goTo('data-emprestimo')">Selecionar →</button></td></tr>
+              <tr><td>PAT-0004</td><td><b>Notebook Dell Latitude</b></td><td>Notebook</td><td><span class="badge green">Disponível</span></td><td><button class="btn btn-blue btn-sm" onclick="goTo('data-emprestimo')">Selecionar →</button></td></tr>
+              <tr><td>PAT-0006</td><td><b>Cabo HDMI 2m</b></td><td>Cabo HDMI</td><td><span class="badge green">Disponível</span></td><td><button class="btn btn-blue btn-sm" onclick="goTo('data-emprestimo')">Selecionar →</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     TELA 5 — DATA EMPRÉSTIMO
+══════════════════════════ -->
+<div id="data-emprestimo" class="screen">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><div class="icon">🖥️</div><span>Lab.<br>Informática</span></div>
+      <span class="nav-section">Geral</span>
+      <div class="nav-item" onclick="goTo('dashboard')"><span class="ni">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="goTo('equipamentos')"><span class="ni">🖱️</span> Equipamentos</div>
+      <div class="nav-item active"><span class="ni">📋</span> Empréstimos</div>
+      <div class="nav-item" onclick="goTo('devolucao')"><span class="ni">↩️</span> Devoluções</div>
+      <span class="nav-section">Administração</span>
+      <div class="nav-item" onclick="goTo('cadastro-item')"><span class="ni">➕</span> Cadastrar Item</div>
+      <div class="nav-item" onclick="goTo('usuarios')"><span class="ni">👥</span> Usuários</div>
+      <div class="sidebar-footer"><div class="user-chip"><div class="avatar">CD</div><div class="info"><span class="name">Carla Diretora</span><span class="role">Diretor</span></div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <div><div style="font-size:18px;font-weight:700;">Novo Empréstimo</div><div class="sub">Passo 2 de 3 — Informações do empréstimo</div></div>
+        <div class="topbar-actions">
+          <button class="btn btn-outline" onclick="goTo('selecao-item')">← Voltar</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="alert warning">⚠️ Item selecionado: <b>Teclado Multilaser — PAT-0002</b></div>
+        <div class="form-card">
+          <h3>Dados do solicitante</h3>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Nome</label>
+              <input type="text" placeholder="Nome completo">
+            </div>
+            <div class="form-field">
+              <label>Matrícula</label>
+              <input type="text" placeholder="Ex: 2024001">
+            </div>
+            <div class="form-field">
+              <label>Perfil</label>
+              <select><option>Aluno</option><option>Professor</option></select>
+            </div>
+            <div class="form-field">
+              <label>Turma / Departamento</label>
+              <input type="text" placeholder="Ex: DS3A / Informática">
+            </div>
+          </div>
+        </div>
+        <div class="form-card">
+          <h3>Datas</h3>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Data de retirada</label>
+              <input type="date" value="2026-07-02">
+            </div>
+            <div class="form-field">
+              <label>Data prevista de devolução</label>
+              <input type="date" value="2026-07-05">
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;">
+          <button class="btn btn-outline" onclick="goTo('selecao-item')">Voltar</button>
+          <button class="btn btn-blue" onclick="goTo('confirmacao')">Continuar →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     TELA 6 — CONFIRMAÇÃO
+══════════════════════════ -->
+<div id="confirmacao" class="screen">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><div class="icon">🖥️</div><span>Lab.<br>Informática</span></div>
+      <span class="nav-section">Geral</span>
+      <div class="nav-item" onclick="goTo('dashboard')"><span class="ni">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="goTo('equipamentos')"><span class="ni">🖱️</span> Equipamentos</div>
+      <div class="nav-item active"><span class="ni">📋</span> Empréstimos</div>
+      <div class="nav-item" onclick="goTo('devolucao')"><span class="ni">↩️</span> Devoluções</div>
+      <span class="nav-section">Administração</span>
+      <div class="nav-item" onclick="goTo('cadastro-item')"><span class="ni">➕</span> Cadastrar Item</div>
+      <div class="nav-item" onclick="goTo('usuarios')"><span class="ni">👥</span> Usuários</div>
+      <div class="sidebar-footer"><div class="user-chip"><div class="avatar">CD</div><div class="info"><span class="name">Carla Diretora</span><span class="role">Diretor</span></div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <div><div style="font-size:18px;font-weight:700;">Novo Empréstimo</div><div class="sub">Passo 3 de 3 — Confirmação</div></div>
+        <div class="topbar-actions">
+          <button class="btn btn-outline" onclick="goTo('data-emprestimo')">← Voltar</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="form-card">
+          <h3>Resumo do empréstimo</h3>
+          <div class="detail-grid">
+            <div class="detail-item"><div class="dl">Item</div><div class="dv">Teclado Multilaser</div></div>
+            <div class="detail-item"><div class="dl">Patrimônio</div><div class="dv">PAT-0002</div></div>
+            <div class="detail-item"><div class="dl">Solicitante</div><div class="dv">Maria Silva</div></div>
+            <div class="detail-item"><div class="dl">Matrícula</div><div class="dv">2024001</div></div>
+            <div class="detail-item"><div class="dl">Perfil</div><div class="dv">Aluno</div></div>
+            <div class="detail-item"><div class="dl">Turma</div><div class="dv">DS3A</div></div>
+            <div class="detail-item"><div class="dl">Data de retirada</div><div class="dv">02/07/2026</div></div>
+            <div class="detail-item"><div class="dl">Devolução prevista</div><div class="dv">05/07/2026</div></div>
+          </div>
+          <div class="action-row">
+            <button class="btn btn-outline" onclick="goTo('data-emprestimo')">Voltar</button>
+            <button class="btn btn-green" onclick="goTo('emprestimos')">✓ Confirmar Empréstimo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     TELA 7 — EMPRÉSTIMOS
+══════════════════════════ -->
+<div id="emprestimos" class="screen">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><div class="icon">🖥️</div><span>Lab.<br>Informática</span></div>
+      <span class="nav-section">Geral</span>
+      <div class="nav-item" onclick="goTo('dashboard')"><span class="ni">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="goTo('equipamentos')"><span class="ni">🖱️</span> Equipamentos</div>
+      <div class="nav-item active"><span class="ni">📋</span> Empréstimos</div>
+      <div class="nav-item" onclick="goTo('devolucao')"><span class="ni">↩️</span> Devoluções</div>
+      <span class="nav-section">Administração</span>
+      <div class="nav-item" onclick="goTo('cadastro-item')"><span class="ni">➕</span> Cadastrar Item</div>
+      <div class="nav-item" onclick="goTo('usuarios')"><span class="ni">👥</span> Usuários</div>
+      <div class="sidebar-footer"><div class="user-chip"><div class="avatar">CD</div><div class="info"><span class="name">Carla Diretora</span><span class="role">Diretor</span></div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <div><div style="font-size:18px;font-weight:700;">Empréstimos</div><div class="sub">Gerenciar solicitações</div></div>
+        <div class="topbar-actions">
+          <button class="btn btn-blue" onclick="goTo('selecao-item')">+ Novo Empréstimo</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="alert warning">⏳ 3 solicitações aguardando aprovação</div>
+        <div class="table-wrap">
+          <div class="table-header">
+            <h3>Todas as solicitações</h3>
+          </div>
+          <table>
+            <thead><tr><th>#</th><th>Item</th><th>Solicitante</th><th>Retirada</th><th>Devolução</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>#12</td><td><b>Tablet Samsung A8</b></td><td>Maria Silva</td>
+                <td>01/07/2026</td><td>03/07/2026</td>
+                <td><span class="badge yellow">Pendente</span></td>
+                <td style="display:flex;gap:6px;padding:13px 20px;">
+                  <button class="btn btn-green btn-sm">✓ Aprovar</button>
+                  <button class="btn btn-red btn-sm">✗ Rejeitar</button>
+                </td>
+              </tr>
+              <tr>
+                <td>#11</td><td><b>Mouse Logitech</b></td><td>João Aluno</td>
+                <td>30/06/2026</td><td>02/07/2026</td>
+                <td><span class="badge red">Emprestado</span></td>
+                <td><button class="btn btn-outline btn-sm" onclick="goTo('devolucao')">Registrar devolução</button></td>
+              </tr>
+              <tr>
+                <td>#10</td><td><b>Notebook Dell</b></td><td>Prof. Carlos</td>
+                <td>28/06/2026</td><td>01/07/2026</td>
+                <td><span class="badge green">Devolvido</span></td>
+                <td><button class="btn btn-outline btn-sm">Ver detalhes</button></td>
+              </tr>
+              <tr>
+                <td>#9</td><td><b>Teclado Multilaser</b></td><td>Ana Lima</td>
+                <td>01/07/2026</td><td>04/07/2026</td>
+                <td><span class="badge yellow">Pendente</span></td>
+                <td style="display:flex;gap:6px;padding:13px 20px;">
+                  <button class="btn btn-green btn-sm">✓ Aprovar</button>
+                  <button class="btn btn-red btn-sm">✗ Rejeitar</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     TELA 8 — DEVOLUÇÃO
+══════════════════════════ -->
+<div id="devolucao" class="screen">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><div class="icon">🖥️</div><span>Lab.<br>Informática</span></div>
+      <span class="nav-section">Geral</span>
+      <div class="nav-item" onclick="goTo('dashboard')"><span class="ni">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="goTo('equipamentos')"><span class="ni">🖱️</span> Equipamentos</div>
+      <div class="nav-item" onclick="goTo('emprestimos')"><span class="ni">📋</span> Empréstimos</div>
+      <div class="nav-item active"><span class="ni">↩️</span> Devoluções</div>
+      <span class="nav-section">Administração</span>
+      <div class="nav-item" onclick="goTo('cadastro-item')"><span class="ni">➕</span> Cadastrar Item</div>
+      <div class="nav-item" onclick="goTo('usuarios')"><span class="ni">👥</span> Usuários</div>
+      <div class="sidebar-footer"><div class="user-chip"><div class="avatar">CD</div><div class="info"><span class="name">Carla Diretora</span><span class="role">Diretor</span></div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <div><div style="font-size:18px;font-weight:700;">Devoluções</div><div class="sub">Itens para devolver</div></div>
+      </div>
+      <div class="content">
+        <div class="table-wrap">
+          <div class="table-header"><h3>Itens emprestados atualmente</h3></div>
+          <table>
+            <thead><tr><th>Item</th><th>Patrimônio</th><th>Solicitante</th><th>Retirada</th><th>Prazo</th><th>Situação</th><th>Ação</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><b>Mouse Logitech</b></td><td>PAT-0001</td><td>João Aluno</td>
+                <td>30/06/2026</td><td>02/07/2026</td>
+                <td><span class="badge red">Atrasado</span></td>
+                <td><button class="btn btn-green btn-sm">↩ Devolvido</button></td>
+              </tr>
+              <tr>
+                <td><b>Monitor LG 22"</b></td><td>PAT-0005</td><td>Prof. Ana</td>
+                <td>01/07/2026</td><td>05/07/2026</td>
+                <td><span class="badge blue">No prazo</span></td>
+                <td><button class="btn btn-green btn-sm">↩ Devolvido</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     TELA 9 — CADASTRAR ITEM
+══════════════════════════ -->
+<div id="cadastro-item" class="screen">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><div class="icon">🖥️</div><span>Lab.<br>Informática</span></div>
+      <span class="nav-section">Geral</span>
+      <div class="nav-item" onclick="goTo('dashboard')"><span class="ni">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="goTo('equipamentos')"><span class="ni">🖱️</span> Equipamentos</div>
+      <div class="nav-item" onclick="goTo('emprestimos')"><span class="ni">📋</span> Empréstimos</div>
+      <div class="nav-item" onclick="goTo('devolucao')"><span class="ni">↩️</span> Devoluções</div>
+      <span class="nav-section">Administração</span>
+      <div class="nav-item active"><span class="ni">➕</span> Cadastrar Item</div>
+      <div class="nav-item" onclick="goTo('usuarios')"><span class="ni">👥</span> Usuários</div>
+      <div class="sidebar-footer"><div class="user-chip"><div class="avatar">CD</div><div class="info"><span class="name">Carla Diretora</span><span class="role">Diretor</span></div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <div><div style="font-size:18px;font-weight:700;">Cadastrar Item</div><div class="sub">Adicionar novo equipamento ao laboratório</div></div>
+      </div>
+      <div class="content">
+        <div class="form-card">
+          <h3>Informações do equipamento</h3>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Nome do item</label>
+              <input type="text" placeholder="Ex: Tablet Samsung A8">
+            </div>
+            <div class="form-field">
+              <label>Código de patrimônio</label>
+              <input type="text" placeholder="Ex: PAT-0010">
+            </div>
+            <div class="form-field">
+              <label>Categoria</label>
+              <select>
+                <option>Mouse</option><option>Teclado</option><option>Tablet</option>
+                <option>Notebook</option><option>Monitor</option><option>Cabo HDMI</option><option>Headset</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Status inicial</label>
+              <select><option>Disponível</option><option>Manutenção</option></select>
+            </div>
+          </div>
+          <div class="action-row">
+            <button class="btn btn-outline" onclick="goTo('equipamentos')">Cancelar</button>
+            <button class="btn btn-blue" onclick="goTo('equipamentos')">Salvar item</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     TELA 10 — USUÁRIOS
+══════════════════════════ -->
+<div id="usuarios" class="screen">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><div class="icon">🖥️</div><span>Lab.<br>Informática</span></div>
+      <span class="nav-section">Geral</span>
+      <div class="nav-item" onclick="goTo('dashboard')"><span class="ni">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="goTo('equipamentos')"><span class="ni">🖱️</span> Equipamentos</div>
+      <div class="nav-item" onclick="goTo('emprestimos')"><span class="ni">📋</span> Empréstimos</div>
+      <div class="nav-item" onclick="goTo('devolucao')"><span class="ni">↩️</span> Devoluções</div>
+      <span class="nav-section">Administração</span>
+      <div class="nav-item" onclick="goTo('cadastro-item')"><span class="ni">➕</span> Cadastrar Item</div>
+      <div class="nav-item active"><span class="ni">👥</span> Usuários</div>
+      <div class="sidebar-footer"><div class="user-chip"><div class="avatar">CD</div><div class="info"><span class="name">Carla Diretora</span><span class="role">Diretor</span></div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <div><div style="font-size:18px;font-weight:700;">Usuários</div><div class="sub">Registro de professores, pedagogos e alunos</div></div>
+        <div class="topbar-actions">
+          <button class="btn btn-blue">+ Cadastrar Usuário</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Matrícula</th><th>Cadastro</th></tr></thead>
+            <tbody>
+              <tr><td><b>Carla Diretora</b></td><td>carla@escola.edu.br</td><td><span class="badge blue">Diretor</span></td><td>—</td><td>01/01/2026</td></tr>
+              <tr><td><b>João Souza</b></td><td>joao.souza@escola.edu.br</td><td><span class="badge yellow">Professor</span></td><td>—</td><td>15/02/2026</td></tr>
+              <tr><td><b>Ana Pedagoga</b></td><td>ana.pedagoga@escola.edu.br</td><td><span class="badge green">Pedagogo</span></td><td>—</td><td>15/02/2026</td></tr>
+              <tr><td><b>Maria Silva</b></td><td>maria@escola.edu.br</td><td><span class="badge">Aluno</span></td><td>2024001</td><td>01/03/2026</td></tr>
+              <tr><td><b>João Aluno</b></td><td>joao.aluno@escola.edu.br</td><td><span class="badge">Aluno</span></td><td>2024002</td><td>01/03/2026</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function goTo(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+</script>
+</body>
+</html>
